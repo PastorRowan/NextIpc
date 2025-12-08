@@ -1,0 +1,23 @@
+
+{
+    "name": "nextipcelectron",
+    "version": "0.1.0",
+    "description": "A simple npm package boilerplate with TypeScript",
+    "main": "dist/index.js",
+    "type": "module",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "build:tests": "tsc -p tests/tsconfig.json",
+        "test:e2e": "npm run build:tests && npx playwright test"
+    },
+    "keywords": [],
+    "author": "Rowan Van Zyl",
+    "license": "MIT",
+    "devDependencies": {
+        "@playwright/test": "^1.57.0",
+        "@types/node": "^24.10.1",
+        "electron": "^39.2.6",
+        "typescript": "^5.9.3"
+    }
+}
