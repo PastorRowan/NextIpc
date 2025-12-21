@@ -2,9 +2,10 @@
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
-    testDir: "./tests-out/e2e",          // Where your E2E tests live
+    testDir: "./dist-tests/e2e",          // Where your E2E tests live
+    // 30000 default
     timeout: 30000,                  // Max time one test can run
-    retries: 1,                     // Retry once on failure
+    retries: 0,                     // Retry once on failure
     reporter: "list",               // Output test results as a list
     use: {
         headless: true,               // Run Electron in headless mode (no GUI)

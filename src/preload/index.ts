@@ -1,2 +1,2 @@
 
-export { generateInvokes } from "./generateInvokes";
+export { exposeInMainWorld } from "./exposeInMainWorld";

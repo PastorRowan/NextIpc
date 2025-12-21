@@ -1,12 +1,10 @@
 
-import {
-    generateInvokes
-} from "./preload/generateInvokes";
+import { defaultConfig } from "./defaultConfig";
 
-export const main = {
-    generateInvokes
-};
+// index.ts
 
-export const renderer = {
+export { defineConfig } from "./types";
 
+export interface NextIpc {
+    DefaultConfig: typeof defaultConfig;
 };

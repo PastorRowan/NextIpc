@@ -1,2 +1,2 @@
 
-export { flattenHandlers } from "./flattenHandlers";
+export { isSerializable } from "./isSerializable";

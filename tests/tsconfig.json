@@ -1,15 +1,27 @@
 
 {
     "compilerOptions": {
+        "composite": true,
+        "declaration": true,
+        "declarationMap": false,
         "target": "ES2020",
         "module": "ESNext",
-        "outDir": "../tests-out",
+        "outDir": "../dist-tests",
         "rootDir": ".",
         "esModuleInterop": true,
         "moduleResolution": "node",
         "strict": true,
         "allowJs": true,
-        "resolveJsonModule": true
+        "resolveJsonModule": true,
+        "baseUrl": ".",
+        "paths": {
+            "NextIpc": [
+                "../dist/index.d.ts"
+            ]
+        }
     },
-    "include": ["**/*.ts", "**/*.js"],
+    "include": ["**/*.ts", "**/*.d.ts"],
+    "exclude": [
+        "e2e/electron/preload.ts"
+    ]
 }

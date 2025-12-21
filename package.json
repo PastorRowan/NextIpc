@@ -1,4 +1,3 @@
-
 {
     "name": "nextipcelectron",
     "version": "0.1.0",
@@ -7,9 +6,11 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsc",
-        "build:tests": "tsc -p tests/tsconfig.json",
-        "test:e2e": "npm run build:tests && npx playwright test"
+        "build": "tsc -b src/tsconfig.json",
+        "build:tests:preload": "node tests/e2e/electron/build-preload.js",
+        "build:tests": "tsc -b tests/tsconfig.json && node tests/copyStatic.js && npm run build:tests:preload",
+        "tests:e2e": "npm run build && npm run build:tests && npx playwright test",
+        "runElectron": "tsc -p src/tsconfig.json && npm run build:tests && electron dist-tests/e2e/electron/main.js"
     },
     "keywords": [],
     "author": "Rowan Van Zyl",
@@ -18,6 +19,7 @@
         "@playwright/test": "^1.57.0",
         "@types/node": "^24.10.1",
         "electron": "^39.2.6",
+        "esbuild": "^0.27.1",
         "typescript": "^5.9.3"
     }
 }
