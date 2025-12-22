@@ -2,14 +2,14 @@
 import { Config } from "../config";
 import {
     FlatSendChannels,
-    FlatInvokeChannels,
+    FlatInvokeChannels
 } from "./helpers";
 
-export type { Policy } from "./policy";
-
-export { defineConfig } from "./defineConfig";
-
-export type { Serializable } from "./policy";
+export type {
+    Domain,
+    DirectionType,
+    DomainMapType
+} from "./types"
 
 export type { ArgsOfChannel } from "./helpers";
 
