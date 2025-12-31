@@ -16,18 +16,34 @@ test.beforeAll(async () => {
     // Intialise main process
     electronApp = await electron.launch({ args: ["electron/main.js"] });
     await electronApp.evaluate(function() {
-        const ipcM = global.ipcM;
-        if (ipcM === undefined) {
-            throw new Error("ipcM is undefined please check that it is attached to global object");
+        const createMainClient = global.createMainClient;
+        if (typeof createMainClient !== "function") {
+            throw new Error("createMainClient was not assigned to the global object in main process");
+        };
+        const createMainListeners = global.createMainListeners;
+        if (typeof createMainListeners !== "function") {
+            throw new Error("createMainListeners was not assigned to the global object in main process");
         };
     });
 
     // Intialise renderer process
     page = await electronApp.firstWindow();
     await page.evaluate(function() {
-        const ipcR = window.ipcR;
-        if (ipcR === undefined) {
-            throw new Error("ipcR is undefined please check that preload exposeInMainWorld function has run");
+        const createRendererClient = window.ipcR.createRendererClient;
+        if (typeof createRendererClient !== "function") {
+            throw new Error(
+                "createRendererClient was not assigned to the window object in renderer process\n"
+                + "Run exposeInMainWorld function in preload script\n"
+                + "More info in the preload folder"
+            );
+        };
+        const createRendererListeners = window.ipcR.createRendererListeners;
+        if (typeof createRendererListeners !== "function") {
+            throw new Error(
+                "createRendererListeners was not assigned to the window object in renderer process\n"
+                + "Run exposeInMainWorld function in preload script\n"
+                + "More info in the preload folder"
+            );
         };
     });
 
@@ -37,57 +53,71 @@ test.afterAll(async function() {
     await electronApp.close();
 });
 
-test.describe("IPC helpers end-to-end", () => {
+test.describe("IPC end-to-end", () => {
 
-    test("ipcRenderer.invoke -> ipcMain.handle", async function() {
+    test("Renderer.invoke -> Main.handle", async function() {
 
-        const mockData = { id: "123", name: "Alice" };
+        const mockPayload = { id: "123" };
 
-        // Register ipcMain.handle("user:get")
+        // Register main listeners
         await electronApp.evaluate(function() {
 
-            const ipcM = global.ipcM;
+            const createMainListeners = global.createMainListeners;
 
-            ipcM.handle("user:get", function(_, arg) {
+            const testDomain = global.testDomain;
+
+            const testListeners = createMainListeners(testDomain);
+
+            testListeners.addHandler("get", function(_, arg) {
                 return arg;
             });
 
         });
 
-        // Renderer invokes "user:get"
-        const user = await page.evaluate((mockData) => {
+        // Register renderer client
+        const user = await page.evaluate(async function(mockData) {
 
-            const ipcR = window.ipcR;
+            const testDomain = window.testDomain;
+            const { createRendererClient } = window.ipcR;
 
-            ipcR.invoke("user:get", mockData);
+            const testClient = createRendererClient(testDomain);
 
-        }, mockData);
+            await testClient.invoke("get", mockData);
 
-        expect(user).toEqual(mockData);
+        }, mockPayload);
+
+        expect(user).toEqual(mockPayload);
 
     });
 
-    test("ipcRenderer.send -> ipcMain.on", async function() {
+    test("Renderer.send -> Main.on", async function() {
 
-        const mockPayload = { id: "123", name: "Alice" };
+        const mockPayload = { id: "123" };
 
         // Setup ipcMain.on listener to capture sent payload
         await electronApp.evaluate(function() {
 
-            const ipcM = global.ipcM;
+            const testDomain = global.testDomain;
 
-            ipcM.on("user:set", function(_, payload) {
-                global.payload = payload;
+            const createMainListeners = global.createMainListeners;
+
+            const testListeners = createMainListeners(testDomain);
+
+            testListeners.addOn("update", function(_, arg) {
+                global.payload = arg;
             });
 
         });
 
         // Renderer sends "settings:update" message
-        await page.evaluate(function(mockPayload) {
+        await page.evaluate(async function(mockData) {
 
-            const ipcR = window.ipcR;
+            const testDomain = window.testDomain;
+            const { createRendererClient } = window.ipcR;
 
-            ipcR.send("user:set", mockPayload);
+            const testClient = createRendererClient(testDomain);
+
+            await testClient.invoke("get", mockData);
 
         }, mockPayload);
 
@@ -105,29 +135,36 @@ test.describe("IPC helpers end-to-end", () => {
         // Setup ipcRenderer.on listener in renderer to receive main -> renderer messages
         await page.evaluate(function() {
 
-            const ipcR = window.ipcR;
+            const testDomain = window.testDomain;
+            const { createRendererListeners } = window.ipcR;
 
-            ipcR.on("user:updated", (_, payload) => {
-                window.payload = payload;
+            const testListeners = createRendererListeners(testDomain);
+
+            testListeners.addOn("notify", function(_, arg) {
+                window.payload = arg;
             });
 
         });
 
-        const mockPayload = { id: "123", name: "Alice Updated" };
+        const mockPayload = { id: "123" };
 
         // From main process, send event to renderer
-        await electronApp.evaluate(function(mockPayloadP) {
+        await electronApp.evaluate(function(mockData) {
 
             const isSerializable = global.isSerializable;
 
-            if (!isSerializable(mockPayloadP)) {
+            if (!isSerializable(mockData)) {
                 throw new Error("payloadP is not serializable");
             };
 
             const webContents = global.webContents;
-            const ipcM = global.ipcM;
+            const testDomain = global.testDomain;
 
-            ipcM.send(webContents, "user:updated", mockPayloadP);
+            const createMainClient = global.createMainClient;
+
+            const testClient = createMainClient(testDomain);
+
+            testClient.send(webContents, "notify", mockData);
 
         }, mockPayload);
 

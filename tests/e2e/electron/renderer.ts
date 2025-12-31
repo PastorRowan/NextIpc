@@ -1,8 +1,9 @@
 
-import { ipcR } from "../../../dist/renderer/index.js"; 
+import { testDomain } from "../test.domain"; 
 
 console.log("renderer loading");
 
-console.log("ipcR: ", ipcR);
+console.log("testDomain: ", testDomain);
+window.testDomain = testDomain;
 
 console.log("Renderer finished loading");

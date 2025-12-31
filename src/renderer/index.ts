@@ -1,29 +1,30 @@
 
-import type { invoke } from "../preload/invoke";
-import type { on } from "../preload/on";
-import type { send } from "../preload/send";
+import type {
+    createRendererClient as createRendererClientImp
+} from "../preload/createRendererClient";
+import type {
+    createRendererListeners as createRendererListenersImp
+} from "../preload/createRendererListeners";
 
 export interface IpcR {
-    invoke: typeof invoke;
-    on: typeof on;
-    send: typeof send;
+    createRendererClient: typeof createRendererClientImp;
+    createRendererListeners: typeof createRendererListenersImp;
 };
 
 // @ts-ignore
-const ipcRWin = window.ipcR as IpcR;
+const ipcRWin = window.ipcR as IpcR | undefined;
 
 if (
     ipcRWin === undefined ||
-    ipcRWin.invoke === undefined ||
-    ipcRWin.on === undefined ||
-    ipcRWin.send === undefined
+    ipcRWin.createRendererClient === undefined ||
+    ipcRWin.createRendererListeners === undefined
 ) {
     throw new Error(
-        "ipcR is not properly initialized. " +
-        "Ensure that 'exposeInMainWorld' has been called in the preload script " +
-        "to expose the 'ipcR' API on the window object. " +
+        "ipcR is not properly initialized.\n" +
+        "Ensure 'exposeInMainWorld' is called in the preload script to expose the 'ipcR' API\n" +
         "See NextIpc/preload for the required setup."
     );
 };
 
-export const ipcR = ipcRWin;
+export const createRendererClient = ipcRWin.createRendererClient;
+export const createRendererListeners = ipcRWin.createRendererListeners

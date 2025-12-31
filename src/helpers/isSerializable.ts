@@ -1,5 +1,5 @@
 
-import type { Serializable } from "../types";
+import type { Serializable } from "../Policy";
 
 export function isSerializable(value: unknown): value is Serializable {
 

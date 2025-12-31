@@ -1,3 +1,4 @@
+
 {
     "name": "nextipcelectron",
     "version": "0.1.0",
@@ -6,7 +7,9 @@
     "type": "module",
     "types": "dist/index.d.ts",
     "scripts": {
+        "clean-dist": "node scripts/clean.js dist",
         "build": "tsc -b src/tsconfig.json",
+        "clean-build": "npm run clean-dist && npm run build",
         "build:tests:preload": "node tests/e2e/electron/build-preload.js",
         "build:tests": "tsc -b tests/tsconfig.json && node tests/copyStatic.js && npm run build:tests:preload",
         "tests:e2e": "npm run build && npm run build:tests && npx playwright test",

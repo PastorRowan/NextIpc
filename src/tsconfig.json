@@ -19,17 +19,9 @@
         "resolveJsonModule": true,
         "isolatedModules": true,
         "noEmitOnError": true,
-        "strictFunctionTypes": false,
-        "baseUrl": ".",
-        "paths": {
-            "NextIpc": [
-                "index.ts",
-                "index.d.ts"
-            ]
-        }
+        "strictFunctionTypes": false
     },
     "include": [
-        "**/*.ts",
-        "**/*.d.ts"
+        "**/*.ts"
     ]
 }

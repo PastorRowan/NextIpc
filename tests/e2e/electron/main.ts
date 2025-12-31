@@ -1,27 +1,24 @@
 
 import { isSerializable } from "../../../dist/helpers/index.js";
 global.isSerializable = isSerializable;
-import { app, BrowserWindow, crashReporter } from "electron";
+import {
+    app,
+    BrowserWindow
+} from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
-import { ipcM } from "../../../dist/main/index.js";
-// @ts-ignore
-global.ipcM = ipcM;
+import {
+    createMainClient,
+    createMainListeners
+} from "../../../dist/main/index.js";
+import { testDomain } from "../test.domain.js";
+
+global.createMainClient = createMainClient;
+global.createMainListeners = createMainListeners;
+global.testDomain = testDomain;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Custom crash dump path
-app.setPath("crashDumps", path.join(__dirname, "crashes"));
-
-// Enable crash reporter early, before app.whenReady
-crashReporter.start({
-    productName: "YourAppName",      // Your app"s name
-    companyName: "YourCompanyName",  // Your company or developer name
-    submitURL: "",                   // Leave empty to disable uploading
-    uploadToServer: false,           // Disable uploading, just save locally
-    compress: false,                  // Compress crash reports before saving/uploading
-});
 
 function createWindow() {
 

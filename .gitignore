@@ -9,7 +9,10 @@ dist-tests/
 # Playwright test-results
 test-results/
 
-# Optional: coverage reports
+# package-lock.json
+package-lock.json
+
+# Coverage reports
 coverage/
 
 # Logs
