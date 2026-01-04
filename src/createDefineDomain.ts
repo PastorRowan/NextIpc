@@ -9,7 +9,9 @@ import type {
     UnwrapDomain,
     Direction,
     ReqArgs,
-    ResArgs
+    ResArgs,
+    REQ,
+    RES
 } from "./Domain";
 
 // next-ipc.ts (library code)
@@ -62,39 +64,16 @@ export function createDefineDomain<
         return {} as ResArgs<T>;
     };
 
-    type EnforceDirectionChannels<
-        Name extends string,
-        Dir extends Direction<Name, ReqArgs<unknown>, ResArgs<unknown>>,
-        InvalidInvokes = {
-            [Channel in keyof Dir["invokes"] as
-                Channel extends `${Name}:${string}` ? never : Channel
-            ]: {
-                error: `   ❌ Channel name '${Extract<Channel, string>}' is invalid. Expected format: '${Name}:string'   `;
-            };
-        },
-        InvalidSends = {
-            [Channel in keyof Dir["sends"] as
-                Channel extends `${Name}:${string}` ? never : Channel
-            ]: {
-                error: `   ❌ Channel name '${Extract<Channel, string>}' is invalid. Expected format: '${Name}:string'   `;
-            };
-        }
-    > = {
-        invokes: keyof InvalidInvokes extends never ? unknown : InvalidInvokes;
-        sends: keyof InvalidSends extends never ? unknown : InvalidSends;
-    };
-
     type KillExtraKeys<
         Actual,
         Expected
-    > =
+    > = 
         // Stop recursion for ReqArgs and ResArgs type
         Actual extends ReqArgs<unknown> | ResArgs<unknown>
             ? Actual
             : Expected extends ReqArgs<unknown> | ResArgs<unknown>
                 ? Actual
-                : 
-                {
+                : {
                     [K in keyof Actual]:
                         K extends keyof Expected
                             ? Actual[K] extends object
@@ -102,7 +81,9 @@ export function createDefineDomain<
                                     ? KillExtraKeys<Actual[K], Expected[K]>
                                     : Actual[K]
                                 : Actual[K]
-                            : never;
+                            : {
+                                ERROR: `   ❌ Invalid key '${K & string}', expected key: '${keyof Expected & string}'   `
+                            };
     };
 
     return {
@@ -117,11 +98,9 @@ export function createDefineDomain<
                 name: Name;
                 RendererToMain:
                     RTM &
-                    EnforceDirectionChannels<Name, RTM> &
                     KillExtraKeys<RTM, Direction<Name, ReqArgs<unknown>, ResArgs<unknown>>>;
                 MainToRenderer:
                     MTR &
-                    EnforceDirectionChannels<Name, MTR> &
                     KillExtraKeys<MTR, Direction<Name, ReqArgs<unknown>, ResArgs<unknown>>>;
             }
         ): UnwrapDomain<

@@ -1,6 +1,6 @@
 
-declare const REQ: unique symbol;
-declare const RES: unique symbol;
+export declare const REQ: unique symbol;
+export declare const RES: unique symbol;
 
 export type ReqArgs<T> = T & { readonly [REQ]: true };
 export type ResArgs<T> = T & { readonly [RES]: true };

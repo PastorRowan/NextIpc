@@ -1,49 +1,67 @@
 // Define a helper to extract all `req` types from a channels object
-type ExtractReqs<T extends Record<string, { req: any }>> = {
-  [K in keyof T]: T[K] extends { req: infer Req } ? Req : never;
+type ExtractReqs<T> = {
+    [K in keyof T]:
+        T[K] extends { req: infer Req } ? Req : never;
 };
 
 // Define a helper to extract all `res` types from a channels object (optional `res`)
-type ExtractRess<T extends Record<string, { res?: any }>> = {
+type ExtractRess<T> = {
     [K in keyof T]: T[K] extends { res: infer Res } ? Res : never;
 };
 
 // Define the domain function with full inference on RendererToMain and MainToRenderer
 function defineDomain<
-    Name extends string,
-    RTM extends Record<string, { req: any; res?: any }>,
-    MTR extends Record<string, { req: any; res?: any }>
->(domain: {
-    name: Name;
-    RendererToMain: RTM;
-    MainToRenderer: MTR;
-}) {
+    Name extends string
+>(
+    domain: {
+        name: Name;
+        RendererToMain: {
+            sends: Record<`${Name}:${string}`, { req: unknown }>,
+            invokes: Record<`${Name}:${string}`, { req: unknown, res: unknown }>
+        },
+        MainToRenderer: {
+            sends: Record<`${Name}:${string}`, { req: unknown}>,
+            invokes: Record<`${Name}:${string}`, { req: unknown, res: unknown }>
+        }
+    }
+) {
     return domain;
 }
 
 // Example usage:
 
-const myDomain = defineDomain({
+const testArgObj = {
     name: "test",
     RendererToMain: {
-        "test:update": {
-            req: {} as { id: string }
+        sends: {
+            "test:update": {
+                req: {} as { id: string }
+            }
         },
-        "test:get": {
-        req: {} as { id: string },
-        res: {} as { value: number }
+        invokes: {
+            "test:get": {
+                req: {} as { id: string },
+                res: {} as { id: string }
+            }
         }
     },
     MainToRenderer: {
-        "test:notify": {
-        req: {} as { message: string }
+        sends: {
+            "test:notify": {
+                req: {} as { id: string }
+            }
+        },
+        invokes: {
+
         }
     }
-});
+};
+
+const myDomain = defineDomain(testArgObj);
 
 // Now extract the `req` and `res` types for RendererToMain channels:
-type RendererReqs = ExtractReqs<typeof myDomain["RendererToMain"]>;
-type RendererRess = ExtractRess<typeof myDomain["RendererToMain"]>;
+type RendererReqs = ExtractReqs<typeof testArgObj["RendererToMain"]["invokes"]>;
+type RendererRess = ExtractRess<typeof testArgObj["MainToRenderer"]["invokes"]>;
 
 // Example of inferred types:
 const exampleReq: RendererReqs["test:get"] = { id: "abc" };  // okay
@@ -53,5 +71,5 @@ const exampleRes: RendererRess["test:get"] = { value: 42 };   // okay
 // const exampleResFail: RendererRess["test:get"] = { val: 10 }; // error, property name wrong
 
 // Extract for MainToRenderer similarly:
-type MainReqs = ExtractReqs<typeof myDomain["MainToRenderer"]>;
-type MainRess = ExtractRess<typeof myDomain["MainToRenderer"]>;
+type MainReqs = ExtractReqs<typeof testArgObj["MainToRenderer"]>;
+type MainRess = ExtractRess<typeof testArgObj["MainToRenderer"]>;
