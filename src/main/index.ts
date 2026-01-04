@@ -1,3 +1,3 @@
 
-export { createMainClient } from "./createMainClient";
-export { createMainListeners } from "./createMainListeners";
+export { createMainClient } from "./createMainClient.js";
+export { createMainListeners } from "./createMainListeners.js";

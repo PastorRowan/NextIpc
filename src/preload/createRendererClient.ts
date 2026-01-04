@@ -27,7 +27,12 @@ export function createRendererClient<
             channel: ChannelName,
             ...args: EnsureArray<Req>
         ): Promise<Res> {
-            return ipcRenderer.invoke(`${domainName}:${String(channel)}`, ...args as any);
+            const channelName = `${domainName}:${String(channel)}`;
+            console.log("channel: ", channel);
+            console.log("channelName: ", channelName);
+            console.log("args: ", args);
+            console.log("args[0]: ", args[0]);
+            return ipcRenderer.invoke(channelName, ...args as any);
         }
     };
 };

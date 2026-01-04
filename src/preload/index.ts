@@ -1,2 +1,2 @@
 
-export { exposeInMainWorld } from "./exposeInMainWorld";
+export { exposeInMainWorld } from "./exposeInMainWorld.js";

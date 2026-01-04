@@ -1,2 +1,2 @@
 
-export { createDefineDomain } from "./createDefineDomain";
+export { createDefineDomain } from "./createDefineDomain.js";

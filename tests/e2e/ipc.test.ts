@@ -11,10 +11,44 @@ const __dirname = path.dirname(__filename);
 let electronApp: ElectronApplication;
 let page: Page;
 
-test.beforeAll(async () => {
+// Resolve electron/main.js relative to this file
+const electronMainPath = path.resolve(__dirname, "electron/main.js");
+
+test.beforeAll(async function() {
 
     // Intialise main process
-    electronApp = await electron.launch({ args: ["electron/main.js"] });
+    electronApp = await electron.launch({ args: [electronMainPath] });
+
+    // Main process logging
+    electronApp.on("console", function(msg) {
+        const type = msg.type().toUpperCase();
+        console.log(`[MAIN:${type}]`, msg.text());
+    });
+
+    electronApp.on("close", function() {
+        console.log("[MAIN] Electron app closed");
+    });
+
+    // Renderer logging (all windows)
+    electronApp.on("window", function(pageArg) {
+        pageArg.on("console", (msg) => {
+            const type = msg.type().toUpperCase();
+            console.log(`[RENDERER:${type}]`, msg.text());
+        });
+
+        pageArg.on("pageerror", function(error) {
+            console.log("[RENDERER:PAGEERROR]", error);
+        });
+
+        pageArg.on("crash", () => {
+            console.log("[RENDERER:CRASH] Renderer process crashed");
+        });
+    });
+
+    // Intialise renderer process
+    page = await electronApp.firstWindow();
+
+    // Validate main globals
     await electronApp.evaluate(function() {
         const createMainClient = global.createMainClient;
         if (typeof createMainClient !== "function") {
@@ -26,8 +60,7 @@ test.beforeAll(async () => {
         };
     });
 
-    // Intialise renderer process
-    page = await electronApp.firstWindow();
+    // Validate renderer globals
     await page.evaluate(function() {
         const createRendererClient = window.ipcR.createRendererClient;
         if (typeof createRendererClient !== "function") {
@@ -49,6 +82,7 @@ test.beforeAll(async () => {
 
 });
 
+// Closes electron after all tests
 test.afterAll(async function() {
     await electronApp.close();
 });
@@ -60,15 +94,19 @@ test.describe("IPC end-to-end", () => {
         const mockPayload = { id: "123" };
 
         // Register main listeners
-        await electronApp.evaluate(function() {
+        await electronApp.evaluate(async function() {
 
             const createMainListeners = global.createMainListeners;
 
             const testDomain = global.testDomain;
 
+            console.log("testDomain: ", testDomain);
+
             const testListeners = createMainListeners(testDomain);
 
-            testListeners.addHandler("get", function(_, arg) {
+            testListeners.handle("get", function(_, arg) {
+                console.log("test:get is running");
+                console.log("arg: ", arg);
                 return arg;
             });
 
@@ -82,7 +120,7 @@ test.describe("IPC end-to-end", () => {
 
             const testClient = createRendererClient(testDomain);
 
-            await testClient.invoke("get", mockData);
+            return await testClient.invoke("get", mockData);
 
         }, mockPayload);
 
@@ -103,27 +141,47 @@ test.describe("IPC end-to-end", () => {
 
             const testListeners = createMainListeners(testDomain);
 
-            testListeners.addOn("update", function(_, arg) {
+            testListeners.on("update", function(_, arg) {
                 global.payload = arg;
             });
 
         });
 
         // Renderer sends "settings:update" message
-        await page.evaluate(async function(mockData) {
+        await page.evaluate(function(mockData) {
 
             const testDomain = window.testDomain;
             const { createRendererClient } = window.ipcR;
 
             const testClient = createRendererClient(testDomain);
 
-            await testClient.invoke("get", mockData);
+            testClient.send("update", mockData);
 
         }, mockPayload);
 
         // Poll main process global to verify the payload was received correctly
         const receivedPayload = await electronApp.evaluate(function() {
-            return global.payload;
+            return new Promise((resolve, reject) => {
+                // 5 seconds timeout
+                const maxWaitTime = 5000;
+                // poll every 200ms
+                const intervalTime = 200;
+                let elapsed = 0;
+
+                const interval = setInterval(function() {
+                    const payload = global.payload;
+                    if (payload) {
+                        clearInterval(interval);
+                        resolve(payload);
+                    } else {
+                        elapsed += intervalTime;
+                        if (elapsed >= maxWaitTime) {
+                            clearInterval(interval);
+                            reject(new Error("Timeout: global.payload did not become truthy within 5 seconds"));
+                        };
+                    };
+                }, intervalTime);
+            });
         });
 
         expect(receivedPayload).toEqual(mockPayload);
@@ -140,7 +198,7 @@ test.describe("IPC end-to-end", () => {
 
             const testListeners = createRendererListeners(testDomain);
 
-            testListeners.addOn("notify", function(_, arg) {
+            testListeners.on("notify", function(_, arg) {
                 window.payload = arg;
             });
 
@@ -149,12 +207,32 @@ test.describe("IPC end-to-end", () => {
         const mockPayload = { id: "123" };
 
         // From main process, send event to renderer
-        await electronApp.evaluate(function(mockData) {
+        await electronApp.evaluate(function(_, mockData) {
 
             const isSerializable = global.isSerializable;
 
+            if (typeof isSerializable !== "function") {
+                throw new Error(
+                    "ERROR: The global 'isSerializable' function is missing or not defined in the main process.\n" +
+                    "Make sure 'isSerializable' is correctly attached to the global object before sending IPC messages."
+                );
+            };
+
             if (!isSerializable(mockData)) {
-                throw new Error("payloadP is not serializable");
+
+                let payloadString: string;
+                try {
+                    payloadString = JSON.stringify(mockData, null, 2);
+                } catch {
+                    payloadString = String(mockData);
+                };
+
+                throw new Error(
+                    "ERROR: The provided mockPayload is not serializable.\n" +
+                    "IPC messages must use serializable data structures (e.g., no functions, DOM nodes, or complex classes).\n\n" +
+                    "Payload value: " + payloadString + "\n\n"
+                );
+
             };
 
             const webContents = global.webContents;
@@ -177,9 +255,10 @@ test.describe("IPC end-to-end", () => {
                 let elapsed = 0;
 
                 const interval = setInterval(() => {
-                    if (window.payload) {
+                    const payload = window.payload;
+                    if (payload) {
                         clearInterval(interval);
-                        resolve(window.payload);
+                        resolve(payload);
                     } else {
                         elapsed += intervalTime;
                         if (elapsed >= maxWaitTime) {

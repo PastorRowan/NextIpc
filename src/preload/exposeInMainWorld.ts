@@ -1,7 +1,7 @@
 
 import type {} from "electron";
-import { createRendererClient } from "./createRendererClient";
-import { createRendererListeners } from "./createRendererListeners";
+import { createRendererClient } from "./createRendererClient.js";
+import { createRendererListeners } from "./createRendererListeners.js";
 
 /**
  * 

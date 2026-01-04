@@ -1,5 +1,5 @@
 
-import { testDomain } from "../test.domain"; 
+import { testDomain } from "../test.domain.js"; 
 
 console.log("renderer loading");
 

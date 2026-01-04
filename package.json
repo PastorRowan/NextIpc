@@ -6,15 +6,20 @@
     "main": "dist/index.js",
     "type": "module",
     "types": "dist/index.d.ts",
+
     "scripts": {
-        "clean-dist": "node scripts/clean.js dist",
-        "build": "tsc -b src/tsconfig.json",
-        "clean-build": "npm run clean-dist && npm run build",
-        "build:tests:preload": "node tests/e2e/electron/build-preload.js",
-        "build:tests": "tsc -b tests/tsconfig.json && node tests/copyStatic.js && npm run build:tests:preload",
-        "tests:e2e": "npm run build && npm run build:tests && npx playwright test",
-        "runElectron": "tsc -p src/tsconfig.json && npm run build:tests && electron dist-tests/e2e/electron/main.js"
+"clean-tests:e2e": "node scripts/clean.js dist-tests/e2e",
+"clean-dist": "node scripts/clean.js dist",
+"clean-tests": "node scripts/clean.js dist-tests",
+"clean": "npm run clean-dist && npm run clean-tests",
+"build": "tsc -b src/tsconfig.json",
+"fresh-build": "npm run clean-dist && npm run build",
+"build:tests:preload": "node scripts/bundle.js --src tests/e2e/electron/preload.ts --out dist-tests/e2e/electron/preload.bundle.js --external electron",
+"build:tests": "tsc -b tests/tsconfig.json && node scripts/copyStatic.js --src tests --out dist-tests && npm run build:tests:preload",
+"tests:e2e": "npm run build && npm run build:tests && npx playwright test",
+"fresh-tests:e2e": "npm run fresh-build && npm run clean-tests && npm run build:tests && npx playwright test"
     },
+
     "keywords": [],
     "author": "Rowan Van Zyl",
     "license": "MIT",

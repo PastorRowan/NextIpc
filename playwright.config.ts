@@ -1,9 +1,11 @@
 
-import { defineConfig } from "@playwright/test";
+import { defineConfig } from "playwright/test";
 
 export default defineConfig({
     testDir: "./dist-tests/e2e",          // Where your E2E tests live
     // 30000 default
+    // add max 4 otherwise 32 bit unsinged integer overflow which will make timeout negative
+    // They should use unsigned integers to prevent errors like this
     timeout: 30000,                  // Max time one test can run
     retries: 0,                     // Retry once on failure
     reporter: "list",               // Output test results as a list

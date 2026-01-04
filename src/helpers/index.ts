@@ -1,2 +1,2 @@
 
-export { isSerializable } from "./isSerializable";
+export { isSerializable } from "./isSerializable.js";

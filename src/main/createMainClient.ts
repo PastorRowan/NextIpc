@@ -1,9 +1,7 @@
 
 import type {} from "electron";
 import type { UnwrappedDomain } from "../Domain";
-import type {
-    EnsureArray
-} from "../typeUtilities";
+import type { EnsureArray } from "../typeUtilities";
 
 export function createMainClient<
     D extends UnwrappedDomain

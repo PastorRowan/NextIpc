@@ -1,75 +1,66 @@
 
 import type { UnwrappedDomain } from "../Domain";
+import type {
+    EnsureArray,
+    AreTupleLengthsEqual
+} from "../typeUtilities";
+// Imports Electron namespace type
+import type {} from "electron";
 import { ipcMain } from "electron";
-import { createListeners } from "../shared";
 
 export function createMainListeners<
     D extends UnwrappedDomain
 >(
     domain: D
 ) {
-    return createListeners({
-        domain,
-        direction: "RendererToMain",
-        registerSendListener: function(channel: keyof D["RendererToMain"]["sends"], listener) {
+
+    return {
+
+        on: function<
+            Channel extends keyof D["RendererToMain"]["sends"],
+            Req extends D["RendererToMain"]["sends"][Channel]["req"],
+            Listener extends
+                (
+                    event: Electron.IpcMainEvent,
+                    ...args: EnsureArray<Req>
+                ) => void,
+            GivenArgs extends Parameters<Listener>,
+            ExpectedArgs extends [Electron.IpcMainEvent, ...EnsureArray<Req>]
+        >(
+            channel: Channel,
+            listener:
+                Listener
+                & AreTupleLengthsEqual<
+                    GivenArgs,
+                    ExpectedArgs
+                >
+        ): void {
             ipcMain.on(String(channel), listener);
         },
-        registerInvokeListener: function(channel: keyof D["RendererToMain"]["invokes"], listener) {
+
+        handle: function<
+            Channel extends keyof D["RendererToMain"]["invokes"],
+            Req extends D["RendererToMain"]["invokes"][Channel]["req"],
+            Res extends D["RendererToMain"]["invokes"][Channel]["res"],
+            Listener extends
+                (
+                    event: Electron.IpcMainInvokeEvent,
+                    ...args: EnsureArray<Req>
+                ) => Res | Promise<Res>,
+            GivenArgs extends Parameters<Listener>,
+            ExpectedArgs extends [Electron.IpcMainInvokeEvent, ...EnsureArray<Req>]
+        >(
+            channel: Channel,
+            listener:
+                Listener
+                & AreTupleLengthsEqual<
+                    GivenArgs,
+                    ExpectedArgs
+                >
+        ): void {
             ipcMain.handle(String(channel), listener);
         }
-    })
+
+    };
+
 };
-
-import { createDefineDomain } from "../createDefineDomain";
-
-const {
-    defineDomain,
-    Req,
-    Res
-} = createDefineDomain({
-    policy: {
-        req: {
-            object: true,
-            array: false,
-            primitive: false
-        },
-        res: {
-            object: true,
-            array: false,
-            primitive: false
-        }
-    }
-});
-
-const testDomain = defineDomain({
-    name: "test",
-    RendererToMain: {
-        sends: {
-            "update": {
-                req: Req<{ id: string }>()
-            }
-        },
-        invokes: {
-            "get": {
-                req: Req<{ id: string }>(),
-                res: Res<{ id: string }>()
-            }
-        }
-    },
-    MainToRenderer: {
-        sends: {
-            "notify": {
-                req: Req<{ id: string }>()
-            }
-        },
-        invokes: {
-
-        }
-    }
-});
-
-const testListeners = createMainListeners(testDomain);
-
-testListeners.addHandler("get", function(_, { id }) {
-    return { id };
-});

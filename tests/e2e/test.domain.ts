@@ -24,12 +24,12 @@ export const testDomain = defineDomain({
     name: "test",
     RendererToMain: {
         sends: {
-            "update": {
+            "test:update": {
                 req: Req<{ id: string }>()
             }
         },
         invokes: {
-            "get": {
+            "test:get": {
                 req: Req<{ id: string }>(),
                 res: Res<{ id: string }>()
             }
@@ -37,7 +37,7 @@ export const testDomain = defineDomain({
     },
     MainToRenderer: {
         sends: {
-            "notify": {
+            "test:notify": {
                 req: Req<{ id: string }>()
             }
         },
