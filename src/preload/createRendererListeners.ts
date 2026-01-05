@@ -9,9 +9,10 @@ import type {} from "electron";
 import { ipcRenderer } from "electron";
 
 export function createRendererListeners<
-    D extends UnwrappedDomain
+    Name extends string,
+    D extends UnwrappedDomain<Name>
 >(
-    domain: D
+    domain: D & { name: Name }
 ) {
 
     return {

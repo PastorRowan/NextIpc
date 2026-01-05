@@ -4,35 +4,33 @@ import type { EnsureArray } from "../typeUtilities";
 import { ipcRenderer } from "electron";
 
 export function createRendererClient<
-    D extends UnwrappedDomain
+    Name extends string,
+    D extends UnwrappedDomain<Name>
 >(
-    domain: D
+    domain: D & { name: Name }
 ) {
-    const domainName = domain.name;
     return {
         send: function<
-            ChannelName extends keyof D["RendererToMain"]["sends"],
-            Req extends D["RendererToMain"]["sends"][ChannelName]["req"]
+            SendChannel extends keyof D["RendererToMain"]["sends"],
+            Req extends D["RendererToMain"]["sends"][SendChannel]["req"]
         >(
-            channel: ChannelName,
+            channel: SendChannel,
             ...args: EnsureArray<Req>
         ): void {
-            ipcRenderer.send(`${domainName}:${String(channel)}`, ...args as any[]);
+            ipcRenderer.send(String(channel), ...args as any);
         },
         invoke: function<
-            ChannelName extends keyof D["RendererToMain"]["invokes"],
-            Req extends D["RendererToMain"]["invokes"][ChannelName]["req"],
-            Res extends D["RendererToMain"]["invokes"][ChannelName]["res"]
+            InvokeChannel extends keyof D["RendererToMain"]["invokes"],
+            Req extends D["RendererToMain"]["invokes"][InvokeChannel]["req"],
+            Res extends D["RendererToMain"]["invokes"][InvokeChannel]["res"]
         >(
-            channel: ChannelName,
+            channel: InvokeChannel,
             ...args: EnsureArray<Req>
         ): Promise<Res> {
-            const channelName = `${domainName}:${String(channel)}`;
             console.log("channel: ", channel);
-            console.log("channelName: ", channelName);
             console.log("args: ", args);
             console.log("args[0]: ", args[0]);
-            return ipcRenderer.invoke(channelName, ...args as any);
+            return ipcRenderer.invoke(String(channel), ...args as any);
         }
     };
 };

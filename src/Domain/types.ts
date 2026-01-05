@@ -7,46 +7,19 @@ export type ResArgs<T> = T & { readonly [RES]: true };
 
 export type DirectionType = "RendererToMain" | "MainToRenderer";
 
-export type Direction<
-    Name extends string,
-    Req,
-    Res
-> = {
-    sends: Record<`${Name}:${string}`, { req: Req }>,
-    invokes: Record<`${Name}:${string}`, { req: Req, res: Res }>
-};
-
 // WrappedDomain has req and res branded
 export type WrappedDomain<
-    Name extends string,
-    RTM extends
-        Direction<
-            Name,
-            ReqArgs<unknown>,
-            ResArgs<unknown>
-        >
-    =
-        Direction<
-            Name,
-            ReqArgs<unknown>,
-            ResArgs<unknown>
-        >,
-    MTR extends
-        Direction<
-            Name,
-            ReqArgs<unknown>,
-            ResArgs<unknown>
-        >
-    =
-        Direction<
-            Name,
-            ReqArgs<unknown>,
-            ResArgs<unknown>
-        >
+    Name extends string
 > = {
     name: Name,
-    RendererToMain: RTM,
-    MainToRenderer: MTR
+    RendererToMain: {
+        sends: Record<`${Name}:${string}`, { req: ReqArgs<unknown> }>,
+        invokes: Record<`${Name}:${string}`, { req: ReqArgs<unknown>, res: ResArgs<unknown> }>
+    },
+    MainToRenderer: {
+        sends: Record<`${Name}:${string}`, { req: ReqArgs<unknown> }>,
+        invokes: Record<`${Name}:${string}`, { req: ReqArgs<unknown>, res: ResArgs<unknown> }>
+    }
 };
 
 // Unwrap ReqArgs and ResArgs recursively
@@ -63,33 +36,15 @@ export type UnwrapDomain<T> =
 
 // UnwrappedDomain has req and res unwrapped to unknown
 export type UnwrappedDomain<
-    Name extends string,
-    RTM extends
-        Direction<
-            Name,
-            unknown,
-            unknown
-        >
-    =
-        Direction<
-            Name,
-            unknown,
-            unknown
-        >,
-    MTR extends
-        Direction<
-            Name,
-            unknown,
-            unknown
-        >
-    =
-        Direction<
-            Name,
-            unknown,
-            unknown
-        >
+    Name extends string
 > = {
     name: Name,
-    RendererToMain: RTM,
-    MainToRenderer: MTR
+    RendererToMain: {
+        sends: Record<`${Name}:${string}`, { req: unknown }>,
+        invokes: Record<`${Name}:${string}`, { req: unknown, res: unknown }>
+    },
+    MainToRenderer: {
+        sends: Record<`${Name}:${string}`, { req: unknown }>,
+        invokes: Record<`${Name}:${string}`, { req: unknown, res: unknown }>
+    }
 };

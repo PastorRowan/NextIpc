@@ -4,17 +4,18 @@ import type { UnwrappedDomain } from "../Domain";
 import type { EnsureArray } from "../typeUtilities";
 
 export function createMainClient<
-    D extends UnwrappedDomain
+    Name extends string,
+    D extends UnwrappedDomain<Name>
 >(
-    domain: D
+    domain: D & { name: Name }
 ) {
     return {
         send: function<
-            ChannelName extends keyof D["MainToRenderer"]["sends"],
-            Req extends D["MainToRenderer"]["sends"]["req"]
+            SendChannel extends keyof D["MainToRenderer"]["sends"],
+            Req extends D["MainToRenderer"]["sends"][SendChannel]["req"]
         >(
             webContents: Electron.WebContents,
-            channel: ChannelName,
+            channel: SendChannel,
             ...args: EnsureArray<Req>
         ): void {
             webContents.send(`${domain.name}:${String(channel)}`, ...args as any[]);

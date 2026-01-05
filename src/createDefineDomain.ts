@@ -7,12 +7,31 @@ import type {
 import type {
     WrappedDomain,
     UnwrapDomain,
-    Direction,
     ReqArgs,
-    ResArgs,
-    REQ,
-    RES
+    ResArgs
 } from "./Domain";
+
+type KillExtraKeys<
+    Actual,
+    Expected,
+    RetType =
+        Actual extends ReqArgs<unknown> | ResArgs<unknown>
+            ? Actual
+            : Expected extends ReqArgs<unknown> | ResArgs<unknown>
+                ? Actual
+                : {
+                    [K in keyof Actual]:
+                        K extends keyof Expected
+                            ? Actual[K] extends object
+                                ? Expected[K] extends object
+                                    ? KillExtraKeys<Actual[K], Expected[K]>
+                                    : Actual[K]
+                                : Actual[K]
+                            : {
+                                ERROR: `   ❌ Invalid key '${K & string}', expected key: '${keyof Expected & string}'   `
+                            }
+                }
+> = Actual extends RetType ? unknown : RetType;
 
 // next-ipc.ts (library code)
 export function createDefineDomain<
@@ -64,52 +83,15 @@ export function createDefineDomain<
         return {} as ResArgs<T>;
     };
 
-    type KillExtraKeys<
-        Actual,
-        Expected
-    > = 
-        // Stop recursion for ReqArgs and ResArgs type
-        Actual extends ReqArgs<unknown> | ResArgs<unknown>
-            ? Actual
-            : Expected extends ReqArgs<unknown> | ResArgs<unknown>
-                ? Actual
-                : {
-                    [K in keyof Actual]:
-                        K extends keyof Expected
-                            ? Actual[K] extends object
-                                ? Expected[K] extends object
-                                    ? KillExtraKeys<Actual[K], Expected[K]>
-                                    : Actual[K]
-                                : Actual[K]
-                            : {
-                                ERROR: `   ❌ Invalid key '${K & string}', expected key: '${keyof Expected & string}'   `
-                            };
-    };
-
     return {
         Req,
         Res,
         defineDomain: function<
             Name extends string,
-            RTM extends Direction<Name, ReqArgs<unknown>, ResArgs<unknown>>,
-            MTR extends Direction<Name, ReqArgs<unknown>, ResArgs<unknown>>
+            WrappedD extends WrappedDomain<Name>
         >(
-            domain: {
-                name: Name;
-                RendererToMain:
-                    RTM &
-                    KillExtraKeys<RTM, Direction<Name, ReqArgs<unknown>, ResArgs<unknown>>>;
-                MainToRenderer:
-                    MTR &
-                    KillExtraKeys<MTR, Direction<Name, ReqArgs<unknown>, ResArgs<unknown>>>;
-            }
-        ): UnwrapDomain<
-                WrappedDomain<
-                    Name,
-                    typeof domain.RendererToMain,
-                    typeof domain.MainToRenderer
-                >
-            > {
+            domain: WrappedD & { name: Name } & KillExtraKeys<WrappedD, WrappedDomain<Name>>
+        ): UnwrapDomain<WrappedD> {
             return domain as any;
         }
     };

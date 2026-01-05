@@ -9,16 +9,17 @@ import type {} from "electron";
 import { ipcMain } from "electron";
 
 export function createMainListeners<
-    D extends UnwrappedDomain
+    Name extends string,
+    D extends UnwrappedDomain<Name>
 >(
-    domain: D
+    domain: D & { name: Name }
 ) {
 
     return {
 
         on: function<
-            Channel extends keyof D["RendererToMain"]["sends"],
-            Req extends D["RendererToMain"]["sends"][Channel]["req"],
+            SendChannel extends keyof D["RendererToMain"]["sends"],
+            Req extends D["RendererToMain"]["sends"][SendChannel]["req"],
             Listener extends
                 (
                     event: Electron.IpcMainEvent,
@@ -27,7 +28,7 @@ export function createMainListeners<
             GivenArgs extends Parameters<Listener>,
             ExpectedArgs extends [Electron.IpcMainEvent, ...EnsureArray<Req>]
         >(
-            channel: Channel,
+            channel: SendChannel,
             listener:
                 Listener
                 & AreTupleLengthsEqual<
@@ -39,9 +40,9 @@ export function createMainListeners<
         },
 
         handle: function<
-            Channel extends keyof D["RendererToMain"]["invokes"],
-            Req extends D["RendererToMain"]["invokes"][Channel]["req"],
-            Res extends D["RendererToMain"]["invokes"][Channel]["res"],
+            InvokeChannel extends keyof D["RendererToMain"]["invokes"],
+            Req extends D["RendererToMain"]["invokes"][InvokeChannel]["req"],
+            Res extends D["RendererToMain"]["invokes"][InvokeChannel]["res"],
             Listener extends
                 (
                     event: Electron.IpcMainInvokeEvent,
@@ -50,7 +51,7 @@ export function createMainListeners<
             GivenArgs extends Parameters<Listener>,
             ExpectedArgs extends [Electron.IpcMainInvokeEvent, ...EnsureArray<Req>]
         >(
-            channel: Channel,
+            channel: InvokeChannel,
             listener:
                 Listener
                 & AreTupleLengthsEqual<
