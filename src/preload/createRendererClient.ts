@@ -1,5 +1,8 @@
 
-import type { UnwrappedDomain, } from "../Domain";
+import type {
+    UnwrappedDomain,
+    GetEvents
+} from "../Domain";
 import type { EnsureArray } from "../typeUtilities";
 import { ipcRenderer } from "electron";
 
@@ -11,18 +14,18 @@ export function createRendererClient<
 ) {
     return {
         send: function<
-            SendChannel extends keyof D["RendererToMain"]["sends"],
-            Req extends D["RendererToMain"]["sends"][SendChannel]["req"]
+            RTMSendChannel extends keyof GetEvents<D, "RTM", "send">,
+            Req extends D["events"][RTMSendChannel]["req"]
         >(
-            channel: SendChannel,
+            channel: RTMSendChannel,
             ...args: EnsureArray<Req>
         ): void {
             ipcRenderer.send(String(channel), ...args as any);
         },
         invoke: function<
-            InvokeChannel extends keyof D["RendererToMain"]["invokes"],
-            Req extends D["RendererToMain"]["invokes"][InvokeChannel]["req"],
-            Res extends D["RendererToMain"]["invokes"][InvokeChannel]["res"]
+            InvokeChannel extends keyof GetEvents<D, "RTM", "invoke">,
+            Req extends D["events"][InvokeChannel]["req"],
+            Res extends D["events"][InvokeChannel]["res"]
         >(
             channel: InvokeChannel,
             ...args: EnsureArray<Req>

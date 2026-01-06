@@ -6,9 +6,11 @@ import type {
 } from "./Policy";
 import type {
     WrappedDomain,
+    UnwrappedDomain,
     UnwrapDomain,
     ReqArgs,
-    ResArgs
+    ResArgs,
+    GetEvents
 } from "./Domain";
 
 type KillExtraKeys<
@@ -28,7 +30,7 @@ type KillExtraKeys<
                                     : Actual[K]
                                 : Actual[K]
                             : {
-                                ERROR: `   ❌ Invalid key '${K & string}', expected key: '${keyof Expected & string}'   `
+                                ERROR: `!!! Invalid key '${K & string}', expected key: '${[keyof Expected] & string}'`
                             }
                 }
 > = Actual extends RetType ? unknown : RetType;
@@ -119,27 +121,20 @@ const {
 
 const testDomain = defineDomain({
     name: "test",
-    RendererToMain: {
-        sends: {
-            "test:update": {
-                req: Req<{ id: string }>()
-            }
+    events: {
+        "RTM:send:test:update": {
+            req: Req<{ id: string }>(),
         },
-        invokes: {
-            "test:get": {
-                req: Req<{ id: string }>(),
-                res: Res<{ id: string }>()
-            }
-        }
-    },
-    MainToRenderer: {
-        sends: {
-            "test:notify": {
-                req: Req<{ id: string }>()
-            }
+        "RTM:invoke:test:get": {
+            req: Req<{ id: string }>(),
+            res: Res<{ id: string }>()
         },
-        invokes: {
-
+        "RTM:invoke:test:pull": {
+            req: Req<{ id: string }>(),
+            res: Res<{ id: string }>()
+        },
+        "MTR:send:test:notify": {
+            req: Req<{ id: string }>()
         }
     }
 });

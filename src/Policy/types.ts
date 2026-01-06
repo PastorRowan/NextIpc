@@ -1,12 +1,9 @@
 
-export type SerializablePrimitive =
-    string | number | boolean | null | undefined;
+export type SerializablePrimitive = string | number | boolean | null | undefined;
 
-type SerializableArray =
-    Serializable[];
+type SerializableArray = Serializable[];
 
-type SerializableObject =
-    { [key: string]: Serializable };
+type SerializableObject = { [key: string]: Serializable };
 
 export type Serializable =
     | SerializablePrimitive

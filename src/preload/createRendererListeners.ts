@@ -1,5 +1,8 @@
 
-import type { UnwrappedDomain } from "../Domain";
+import type {
+    UnwrappedDomain,
+    GetEvents
+} from "../Domain";
 import type {
     EnsureArray,
     AreTupleLengthsEqual
@@ -17,8 +20,8 @@ export function createRendererListeners<
 
     return {
         on: function<
-            Channel extends keyof D["MainToRenderer"]["sends"],
-            Req extends D["MainToRenderer"]["sends"][Channel]["req"],
+            MTRSendChannel extends keyof GetEvents<D, "MTR", "send">,
+            Req extends D["events"][MTRSendChannel]["req"],
             Listener extends
                 (
                     event: Electron.IpcRendererEvent,
@@ -27,7 +30,7 @@ export function createRendererListeners<
             GivenArgs extends Parameters<Listener>,
             ExpectedArgs extends [Electron.IpcRendererEvent, ...EnsureArray<Req>]
         >(
-            channel: Channel,
+            channel: MTRSendChannel,
             listener:
                 Listener
                 & AreTupleLengthsEqual<

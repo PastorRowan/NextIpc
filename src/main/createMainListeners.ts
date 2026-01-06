@@ -1,11 +1,14 @@
 
-import type { UnwrappedDomain } from "../Domain";
+import type {
+    UnwrappedDomain,
+    GetEvents
+} from "../Domain";
 import type {
     EnsureArray,
     AreTupleLengthsEqual
 } from "../typeUtilities";
-// Imports Electron namespace type
 import type {} from "electron";
+// Imports Electron namespace type
 import { ipcMain } from "electron";
 
 export function createMainListeners<
@@ -18,8 +21,8 @@ export function createMainListeners<
     return {
 
         on: function<
-            SendChannel extends keyof D["RendererToMain"]["sends"],
-            Req extends D["RendererToMain"]["sends"][SendChannel]["req"],
+            RTMSendChannel extends keyof GetEvents<D, "RTM", "send">,
+            Req extends D["events"][RTMSendChannel]["req"],
             Listener extends
                 (
                     event: Electron.IpcMainEvent,
@@ -28,7 +31,7 @@ export function createMainListeners<
             GivenArgs extends Parameters<Listener>,
             ExpectedArgs extends [Electron.IpcMainEvent, ...EnsureArray<Req>]
         >(
-            channel: SendChannel,
+            channel: RTMSendChannel,
             listener:
                 Listener
                 & AreTupleLengthsEqual<
@@ -40,9 +43,9 @@ export function createMainListeners<
         },
 
         handle: function<
-            InvokeChannel extends keyof D["RendererToMain"]["invokes"],
-            Req extends D["RendererToMain"]["invokes"][InvokeChannel]["req"],
-            Res extends D["RendererToMain"]["invokes"][InvokeChannel]["res"],
+            RTMInvokeChannel extends keyof GetEvents<D, "RTM", "invoke">,
+            Req extends D["events"][RTMInvokeChannel]["req"],
+            Res extends D["events"][RTMInvokeChannel]["res"],
             Listener extends
                 (
                     event: Electron.IpcMainInvokeEvent,
@@ -51,7 +54,7 @@ export function createMainListeners<
             GivenArgs extends Parameters<Listener>,
             ExpectedArgs extends [Electron.IpcMainInvokeEvent, ...EnsureArray<Req>]
         >(
-            channel: InvokeChannel,
+            channel: RTMInvokeChannel,
             listener:
                 Listener
                 & AreTupleLengthsEqual<

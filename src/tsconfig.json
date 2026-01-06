@@ -19,7 +19,8 @@
         "resolveJsonModule": true,
         "isolatedModules": true,
         "noEmitOnError": true,
-        "strictFunctionTypes": false
+        "strictFunctionTypes": false,
+        "noUncheckedIndexedAccess": true
     },
     "include": [
         "**/*.ts"
